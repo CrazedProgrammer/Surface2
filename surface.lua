@@ -98,14 +98,14 @@ function surface.create(width, height, b, t, c)
 			buffer[i] = b
 		end
 	end
-	if not c then
+	if not t then
 		for i = 2, width * height * 3, 3 do
-			buffer[i] = c
+			buffer[i] = t
 		end
 	end
-	if not t then
+	if not c then
 		for i = 3, width * height * 3, 3 do
-			buffer[i] = t
+			buffer[i] = c
 		end
 	end
 	
@@ -201,12 +201,12 @@ function surface.load(strpath, isstr)
 				t = _cc_hex_to_color[data:sub(index, index)]
 			elseif data:byte(index) ~= 13 then
 				buffer[(y * width + x) * 3 + 1] = b
+				buffer[(y * width + x) * 3 + 2] = t
 				if b or t then
-					buffer[(y * width + x) * 3 + 2] = data:sub(index, index)
+					buffer[(y * width + x) * 3 + 3] = data:sub(index, index)
 				elseif data:sub(index, index) ~= " " then
-					buffer[(y * width + x) * 3 + 2] = data:sub(index, index)
+					buffer[(y * width + x) * 3 + 3] = data:sub(index, index)
 				end
-				buffer[(y * width + x) * 3 + 3] = t
 				x = x + 1
 			end
 			index = index + 1
@@ -262,19 +262,46 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 
 	if output.blit and output.setCursorPos then
 		-- CC
-		local dblit, dsetpos, cmd, str, text, back = output.blit, output.setCursorPos, { }, { }, { }, { }
+		local cmd, str, text, back = { }, { }, { }, { }
 		for j = 0, sheight - 1 do
 			for i = 0, swidth - 1 do
-				str[i + 1] = buffer[((j + sy) * bwidth + (i + sx)) * 3 + 2] or " "
-				text[i + 1] = _cc_color_to_hex[buffer[((j + sy) * bwidth + (i + sx)) * 3 + 3] or 1]
-				back[i + 1] = _cc_color_to_hex[buffer[((j + sy) * bwidth + (i + sx)) * 3 + 1]or 32768]
+				str[i + 1] = buffer[((j + sy) * bwidth + (i + sx)) * 3 + 3] or " "
+				text[i + 1] = _cc_color_to_hex[buffer[((j + sy) * bwidth + (i + sx)) * 3 + 2] or 1]
+				back[i + 1] = _cc_color_to_hex[buffer[((j + sy) * bwidth + (i + sx)) * 3 + 1] or 32768]
 			end
-			dsetpos(x + 1, y + j + 1)
-			dblit(table_concat(str), table_concat(text), table_concat(back))
+			output.setCursorPos(x + 1, y + j + 1)
+			output.blit(table_concat(str), table_concat(text), table_concat(back))
 		end
 
 	elseif output.write and output.setCursorPos and output.setTextColor and output.setBackgroundColor then
-		-- CC old
+		-- CC pre-1.76
+		local str, b, t, pb, pt = { }
+		for j = 0, sheight - 1 do
+			output.setCursorPos(x + 1, y + j + 1)
+			for i = 0, swidth - 1 do
+				pb = buffer[((j + sy) * bwidth + (i + sx)) * 3 + 1] or 32768
+				pt = buffer[((j + sy) * bwidth + (i + sx)) * 3 + 2] or 1
+				if pb ~= b then
+					if #str ~= 0 then
+						output.write(table_concat(str))
+						str = { }
+					end
+					b = pb
+					output.setBackgroundColor(b)
+				end
+				if pt ~= t then
+					if #str ~= 0 then
+						output.write(table_concat(str))
+						str = { }
+					end
+					t = pt
+					output.setTextColor(t)
+				end
+				str[#str + 1] = buffer[((j + sy) * bwidth + (i + sx)) * 3 + 3] or " "
+			end
+			output.write(table_concat(str))
+			str = { }
+		end
 	
 	elseif output.blitPixels then
 		-- Riko 4
@@ -307,10 +334,22 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 			end
 		end
 	
+	elseif output.drawPixel then
+		-- Redirection arcade (gpu)
+		-- todo: add image:write support for extra performance
+		local px = output.drawPixel
+		for j = 0, sheight - 1 do
+			for i = 0, swidth - 1 do
+				px(x + i, y + j, buffer[((j + sy) * bwidth + (i + sx)) * 3 + 1] or 0)
+			end
+		end
+
 	else
 		error("unsupported output object")
 	end
 end
+
+
 
 function surf:drawString(x, y, str, b, t)
 	x, y = x + self.ox, y + self.oy
@@ -322,9 +361,9 @@ function surf:drawString(x, y, str, b, t)
 			y = y + 1
 		else
 			if x >= self.cx  and x < self.cx + self.cwidth and y >= self.cy and y < self.cy + self.cheight then
-				self.buffer[(y * self.width + x) * 3 + 2] = c
 				self.buffer[(y * self.width + x) * 3 + 1] = b
-				self.buffer[(y * self.width + x) * 3 + 3] = t
+				self.buffer[(y * self.width + x) * 3 + 2] = t
+				self.buffer[(y * self.width + x) * 3 + 3] = c
 			end
 			x = x + 1
 		end
