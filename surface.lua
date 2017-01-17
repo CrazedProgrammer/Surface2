@@ -44,10 +44,8 @@ end
 local function calcStack(stack, width, height)
 	local ox, oy, cx, cy, cwidth, cheight = 0, 0, 0, 0, width, height
 	for i = 1, #stack do
-		if stack[i].shift then
-			ox = ox + stack[i].x
-			oy = oy + stack[i].y
-		end
+		ox = ox + stack[i].ox
+		oy = oy + stack[i].oy
 		cx = cx + stack[i].x
 		cy = cy + stack[i].y
 		cwidth = stack[i].width
@@ -351,8 +349,53 @@ end
 
 
 
+function surf:push(x, y, width, height, nooffset)
+	x, y = x + self.ox, y + self.oy
+
+	local ox, oy = nooffset and self.ox or x, nooffset and self.oy or y
+	x, y, width, height = clipRect(x, y, width, height, self.cx, self.cy, self.cwidth, self.cheight)
+	self.stack[#self.stack + 1] = {ox = ox - self.ox, oy = oy - self.oy, x = x - self.cx, y = y - self.cy, width = width, height = height}
+	
+	self.ox, self.oy, self.cx, self.cy, self.cwidth, self.cheight = calcStack(self.stack, self.width, self.height)
+end
+
+function surf:pop()
+	if #self.stack == 0 then
+		error("no stencil to pop")
+	end
+	self.stack[#self.stack] = nil
+	self.ox, self.oy, self.cx, self.cy, self.cwidth, self.cheight = calcStack(self.stack, self.width, self.height)
+end
+
+function surf:clear(b, t, c)
+	for j = 0, self.cheight - 1 do
+		for i = 0, self.cwidth - 1 do
+			self.buffer[((j + self.cy) * self.width + i + self.cx) * 3 + 1] = b
+			self.buffer[((j + self.cy) * self.width + i + self.cx) * 3 + 2] = t
+			self.buffer[((j + self.cy) * self.width + i + self.cx) * 3 + 3] = c
+		end
+	end
+end
+
+function surf:drawPixel(x, y, b, t, c)
+	x, y = x + self.ox, y + self.oy
+
+	if x >= self.cx and x < self.cx + self.cwidth and y >= self.cy and y < self.cy + self.cheight then
+		if b or self.overwrite then 
+			self.buffer[(y * self.width + x) * 3 + 1] = b
+		end
+		if t or self.overwrite then
+			self.buffer[(y * self.width + x) * 3 + 2] = t
+		end
+		if c or self.overwrite then 
+			self.buffer[(y * self.width + x) * 3 + 3] = c
+		end
+	end
+end
+
 function surf:drawString(x, y, str, b, t)
 	x, y = x + self.ox, y + self.oy
+
 	local sx = x
 	for i = 1, #str do
 		local c = str:sub(i, i)
@@ -361,14 +404,46 @@ function surf:drawString(x, y, str, b, t)
 			y = y + 1
 		else
 			if x >= self.cx  and x < self.cx + self.cwidth and y >= self.cy and y < self.cy + self.cheight then
-				self.buffer[(y * self.width + x) * 3 + 1] = b
-				self.buffer[(y * self.width + x) * 3 + 2] = t
+				if b or self.overwrite then 
+					self.buffer[(y * self.width + x) * 3 + 1] = b
+				end
+				if t or self.overwrite then
+					self.buffer[(y * self.width + x) * 3 + 2] = t
+				end
 				self.buffer[(y * self.width + x) * 3 + 3] = c
 			end
 			x = x + 1
 		end
 	end
 end
+
+function surf:fillRect(x, y, width, height, b, t, c)
+	x, y, width, height = clipRect(x + self.ox, y + self.oy, width, height, self.cx, self.cy, self.cwidth, self.cheight)
+
+	if b or self.overwrite then
+		for j = 0, height - 1 do
+			for i = 0, width - 1 do
+				self.buffer[((j + y) * self.width + i + x) * 3 + 1] = b
+			end
+		end
+	end
+	if t or self.overwrite then
+		for j = 0, height - 1 do
+			for i = 0, width - 1 do
+				self.buffer[((j + y) * self.width + i + x) * 3 + 2] = t
+			end
+		end
+	end
+	if c or self.overwrite then
+		for j = 0, height - 1 do
+			for i = 0, width - 1 do
+				self.buffer[((j + y) * self.width + i + x) * 3 + 3] = c
+			end
+		end
+	end
+end
+
+
 
 end
 return surface
