@@ -183,6 +183,9 @@ function surface.load(strpath, isstr)
 				lwidth = lwidth + 1
 			end
 		end
+		if data:byte(#data) == 10 then
+			height = height - 1
+		end
 
 		local surf = surface.create(width, height)
 		local buffer = surf.buffer
@@ -224,6 +227,9 @@ function surface.load(strpath, isstr)
 			elseif data:byte(i) ~= 13 then -- not carriage return
 				lwidth = lwidth + 1
 			end
+		end
+		if data:byte(#data) == 10 then
+			height = height - 1
 		end
 
 		local surf = surface.create(width, height)
@@ -365,6 +371,96 @@ function surf:pop()
 	end
 	self.stack[#self.stack] = nil
 	self.ox, self.oy, self.cx, self.cy, self.cwidth, self.cheight = calcStack(self.stack, self.width, self.height)
+end
+
+function surf:save(file, format)
+	format = format or "nfp"
+	local data = { }
+	if format == "nfp" then
+		for j = 0, self.height - 1 do
+			for i = 0, self.width - 1 do
+				data[#data + 1] = _cc_color_to_hex[self.buffer[(j * self.width + i) * 3 + 1]] or " "
+			end
+			data[#data + 1] = "\n"
+		end
+
+	elseif format == "nft" then
+		for j = 0, self.height - 1 do
+			local b, t, pb, pt
+			for i = 0, self.width - 1 do
+				pb = self.buffer[(j * self.width + i) * 3 + 1]
+				pt = self.buffer[(j * self.width + i) * 3 + 2]
+				if pb ~= b then
+					data[#data + 1] = "\30"..(_cc_color_to_hex[pb] or " ")
+					b = pb
+				end
+				if pt ~= t then
+					data[#data + 1] = "\31"..(_cc_color_to_hex[pt] or " ")
+					t = pt
+				end
+				data[#data + 1] = self.buffer[(j * self.width + i) * 3 + 3] or " "
+			end
+			data[#data + 1] = "\n"
+		end
+
+	elseif format == "rif" then
+		data[1] = "RIF"
+		data[2] = string.char(math_floor(self.width / 256), self.width % 256)
+		data[3] = string.char(math_floor(self.height / 256), self.height % 256)
+		local byte, upper, c = 0, false
+		for j = 0, self.width - 1 do
+			for i = 0, self.height - 1 do
+				c = self.buffer[(j * self.width + i) * 3 + 1] or 0
+				if not upper then
+					byte = c * 16
+				else
+					byte = byte + c
+					data[#data + 1] = string.char(byte)
+				end
+				upper = not upper
+			end
+		end
+		if upper then
+			data[#data + 1] = string.char(byte)
+		end
+
+	elseif format == "bmp" then
+		data[1] = "BM"
+		data[2] = string.char(0, 0, 0, 0) -- file size, change later
+		data[3] = string.char(0, 0, 0, 0, 0x36, 0, 0, 0, 0x28, 0, 0, 0) 
+		data[4] = string.char(self.width % 256, math_floor(self.width / 256), 0, 0)
+		data[5] = string.char(self.height % 256, math_floor(self.height / 256), 0, 0)
+		data[6] = string.char(1, 0, 0x18, 0, 0, 0, 0, 0)
+		data[7] = string.char(0, 0, 0, 0) -- pixel data size, change later
+		data[8] = string.char(0x13, 0x0B, 0, 0, 0x13, 0x0B, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+		local padchars = math.ceil((self.width * 3) / 4) * 4 - self.width * 3
+		for j = 0, self.height - 1 do
+			for i = 0, self.width - 1 do
+				data[#data + 1] = string.char((self.buffer[(j * self.width + i) * 3 + 1] or 0) * 255)
+				data[#data + 1] = string.char((self.buffer[(j * self.width + i) * 3 + 2] or 0) * 255)
+				data[#data + 1] = string.char((self.buffer[(j * self.width + i) * 3 + 3] or 0) * 255)
+			end
+			data[#data + 1] = ("\0"):rep(padchars)
+		end
+		local size = #table_concat(data)
+		data[2] = string.char(size % 256, math_floor(size / 256) % 256, math_floor(size / 65536), 0)
+		size = size - 54
+		data[7] = string.char(size % 256, math_floor(size / 256) % 256, math_floor(size / 65536), 0)
+		 
+	else
+		error("format not supported")
+	end
+
+	data = table_concat(data)
+	if file then
+		local handle = io.open(file, "wb")
+		for i = 1, #data do
+			handle:write(data:byte(i))
+		end
+		handle:close()
+	end
+	return data
 end
 
 function surf:clear(b, t, c)
