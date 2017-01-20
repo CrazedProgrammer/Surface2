@@ -566,35 +566,35 @@ function surf:drawLine(x1, y1, x2, y2, b, t, c)
 		end
 	else
 		local delta_x = x2 - x1
-    	local ix = delta_x > 0 and 1 or -1
-    	delta_x = 2 * math.abs(delta_x)
-    	local delta_y = y2 - y1
-    	local iy = delta_y > 0 and 1 or -1
-    	delta_y = 2 * math.abs(delta_y)
-    	self:drawPixel(x1, y1, b, t, c)
-    	if delta_x >= delta_y then
-        	local error = delta_y - delta_x / 2
-        	while x1 ~= x2 do
-            	if (error >= 0) and ((error ~= 0) or (ix > 0)) then
-                	error = error - delta_x
-                	y1 = y1 + iy
-            	end
-            	error = error + delta_y
-            	x1 = x1 + ix
-            	self:drawPixel(x1, y1, b, t, c)
-        	end
-    	else
-        	local error = delta_x - delta_y / 2
-        	while y1 ~= y2 do
-            	if (error >= 0) and ((error ~= 0) or (iy > 0)) then
-               		error = error - delta_y
-                	x1 = x1 + ix
-            	end
-            	error = error + delta_x
-            	y1 = y1 + iy
-           	 	self:drawPixel(x1, y1, b, t, c)
-        	end
-    	end
+		local ix = delta_x > 0 and 1 or -1
+		delta_x = 2 * math.abs(delta_x)
+		local delta_y = y2 - y1
+		local iy = delta_y > 0 and 1 or -1
+		delta_y = 2 * math.abs(delta_y)
+		self:drawPixel(x1, y1, b, t, c)
+		if delta_x >= delta_y then
+			local error = delta_y - delta_x / 2
+			while x1 ~= x2 do
+				if (error >= 0) and ((error ~= 0) or (ix > 0)) then
+					error = error - delta_x
+					y1 = y1 + iy
+				end
+				error = error + delta_y
+				x1 = x1 + ix
+				self:drawPixel(x1, y1, b, t, c)
+			end
+		else
+			local error = delta_x - delta_y / 2
+			while y1 ~= y2 do
+				if (error >= 0) and ((error ~= 0) or (iy > 0)) then
+					error = error - delta_y
+					x1 = x1 + ix
+				end
+				error = error + delta_x
+				y1 = y1 + iy
+				self:drawPixel(x1, y1, b, t, c)
+			end
+		end
 	end
 end
 
