@@ -2,7 +2,7 @@
 Surface version 2.0.0
 
 The MIT License (MIT)
-Copyright (c) 2016 CrazedProgrammer
+Copyright (c) 2017 CrazedProgrammer
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
