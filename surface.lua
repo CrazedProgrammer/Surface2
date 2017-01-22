@@ -598,6 +598,13 @@ function surf:drawLine(x1, y1, x2, y2, b, t, c)
 	end
 end
 
+function surf:drawRect(x, y, width, height, b, t, c)
+	self:drawLine(x, y, x + width - 1, y, b, t, c)
+	self:drawLine(x, y, x, y + height - 1, b, t, c)
+	self:drawLine(x + width - 1, y, x + width - 1, y + height - 1, b, t, c)
+	self:drawLine(x, y + height - 1, x + width - 1, y + height - 1, b, t, c)
+end
+
 function surf:fillRect(x, y, width, height, b, t, c)
 	x, y, width, height = clipRect(x + self.ox, y + self.oy, width, height, self.cx, self.cy, self.cwidth, self.cheight)
 
@@ -739,6 +746,51 @@ function surf:drawSurfaceRotated(surf2, x, y, ox, oy, angle)
 				if c or self.overwrite then
 					self.buffer[(sy * self.width + sx) * 3 + 3] = c
 				end
+			end
+		end
+	end
+end
+
+function surf:drawSurfaceSmall(surf2, x, y)
+	x, y = x + self.ox, y + self.oy
+	if surf2.width % 2 ~= 0 or surf2.height % 3 ~= 0 then
+		error("surface width must be a multiple of 2 and surface height a multiple of 3")
+	end
+
+	local sub, char, c1, c2, c3, c4, c5, c6 = 32768
+	for j = 0, surf2.height / 3 - 1 do
+		for i = 0, surf2.width / 2 - 1 do
+			if i + x >= self.cx and i + x < self.cx + self.cwidth and j + y >= self.cy and j + y < self.cy + self.cheight then
+				char, c1, c2, c3, c4, c5, c6 = 0,
+				surf2.buffer[((j * 3) * surf2.width + i * 2) * 3 + 1],
+				surf2.buffer[((j * 3) * surf2.width + i * 2 + 1) * 3 + 1],
+				surf2.buffer[((j * 3 + 1) * surf2.width + i * 2) * 3 + 1],
+				surf2.buffer[((j * 3 + 1) * surf2.width + i * 2 + 1) * 3 + 1],
+				surf2.buffer[((j * 3 + 2) * surf2.width + i * 2) * 3 + 1],
+				surf2.buffer[((j * 3 + 2) * surf2.width + i * 2 + 1) * 3 + 1]
+				if c1 ~= c6 then
+	                sub = c1
+	                char = 1
+	            end
+	            if c2 ~= c6 then
+	                sub = c2
+	                char = char + 2
+	            end
+	            if c3 ~= c6 then
+	                sub = c3
+	                char = char + 4
+	            end
+	            if c4 ~= c6 then
+	                sub = c4
+	                char = char + 8
+	            end
+	            if c5 ~= c6 then
+	                sub = c5
+	                char = char + 16
+	            end
+	            self.buffer[((j + y) * self.width + i + x) * 3 + 1] = c6
+	            self.buffer[((j + y) * self.width + i + x) * 3 + 2] = sub
+	            self.buffer[((j + y) * self.width + i + x) * 3 + 3] = _chars[128 + char]
 			end
 		end
 	end
