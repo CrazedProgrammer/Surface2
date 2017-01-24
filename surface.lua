@@ -118,6 +118,7 @@ end
 
 surface.palette = { }
 surface.palette.cc = {[1]="F0F0F0",[2]="F2B233",[4]="E57FD8",[8]="99B2F2",[16]="DEDE6C",[32]="7FCC19",[64]="F2B2CC",[128]="4C4C4C",[256]="999999",[512]="4C99B2",[1024]="B266E5",[2048]="3366CC",[4096]="7F664C",[8192]="57A64E",[16384]="CC4C4C",[32768]="191919"}
+surface.palette.riko4 = {"181818","1D2B52","7E2553","008651","AB5136","5F564F","7D7F82","FF004C","FFA300","FFF023","00E755","29ADFF","82769C","FF77A9","FECCA9","ECECEC"}
 
 function surface.create(width, height, b, t, c)
 	local surface = setmetatable({ }, {__index = surface.surf})
@@ -398,8 +399,6 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 	end
 end
 
-
-
 function surf:push(x, y, width, height, nooffset)
 	x, y = x + self.ox, y + self.oy
 
@@ -506,6 +505,29 @@ function surf:save(file, format)
 		handle:close()
 	end
 	return data
+end
+
+function surf:copy()
+	local surface = setmetatable({ }, {__index = surface.surf})
+	
+	for k, v in pairs(self) do
+		surface[k] = v
+	end
+	
+	surface.buffer = { }
+	for i = 1, self.width * self.height * 3 + 1 do
+		surface.buffer[i] = false
+	end
+	for i = 1, self.width * self.height * 3 do
+		surface.buffer[i] = self.buffer[i]
+	end
+
+	surface.stack = { }
+	for i = 1, #self.stack do
+		surface.stack[i] = self.stack[i]
+	end
+	
+	return surface
 end
 
 function surf:clear(b, t, c)
