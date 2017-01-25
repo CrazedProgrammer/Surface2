@@ -40,6 +40,12 @@ for i = 0, 255 do
 	_chars[i] = string.char(i)
 end
 
+local _eprc, _esin, _ecos = 20, { }, { }
+for i = 0, _eprc - 1 do
+	_esin[i + 1] = (1 - math.sin(i / _eprc * math.pi * 2)) / 2
+	_ecos[i + 1] = (1 + math.cos(i / _eprc * math.pi * 2)) / 2
+end
+
 local _steps, _palette, _rgbpal, _palr, _palg, _palb = 16
 
 local function setPalette(palette)
@@ -695,6 +701,12 @@ function surf:fillRect(x, y, width, height, b, t, c)
 				self.buffer[((j + y) * self.width + i + x) * 3 + 3] = c
 			end
 		end
+	end
+end
+
+function surf:drawEllipse(x, y, width, height, b, t, c)
+	for i = 0, _eprc - 1 do
+		self:drawLine(math_floor(x + _ecos[i + 1] * (width - 1) + 0.5), math_floor(y + _esin[i + 1] * (height - 1) + 0.5), math_floor(x + _ecos[(i + 1) % _eprc + 1] * (width - 1) + 0.5), math_floor(y + _esin[(i + 1) % _eprc + 1] * (height - 1) + 0.5), b, t, c)
 	end
 end
 
