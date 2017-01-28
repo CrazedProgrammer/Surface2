@@ -710,6 +710,26 @@ function surf:drawEllipse(x, y, width, height, b, t, c)
 	end
 end
 
+function surf:fillEllipse(x, y, width, height, b, t, c)
+	x, y = x + self.ox, y + self.oy
+
+	for j = 0, height - 1 do
+		for i = 0, width - 1 do
+			if (i / (width - 1) * 2 - 1) ^ 2 + (j / (height - 1) * 2 - 1) ^ 2 <= 1 then
+				if b or self.overwrite then 
+					self.buffer[((j + y) * self.width + i + x) * 3 + 1] = b
+				end
+				if t or self.overwrite then
+					self.buffer[((j + y) * self.width + i + x) * 3 + 2] = t
+				end
+				if c or self.overwrite then 
+					self.buffer[((j + y) * self.width + i + x) * 3 + 3] = c
+				end
+			end
+		end
+	end
+end
+
 function surf:drawSurface(surf2, x, y, width, height, sx, sy, swidth, sheight)
 	x, y, width, height, sx, sy, swidth, sheight = x + self.ox, y + self.oy, width or surf2.width, height or surf2.height, sx or 0, sy or 0, swidth or surf2.width, sheight or surf2.height
 
