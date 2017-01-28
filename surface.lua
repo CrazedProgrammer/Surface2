@@ -715,7 +715,7 @@ function surf:fillEllipse(x, y, width, height, b, t, c)
 
 	for j = 0, height - 1 do
 		for i = 0, width - 1 do
-			if (i / (width - 1) * 2 - 1) ^ 2 + (j / (height - 1) * 2 - 1) ^ 2 <= 1 then
+			if ((i + 0.5) / width * 2 - 1) ^ 2 + ((j + 0.5) / height * 2 - 1) ^ 2 <= 1 then
 				if b or self.overwrite then 
 					self.buffer[((j + y) * self.width + i + x) * 3 + 1] = b
 				end
