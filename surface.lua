@@ -830,6 +830,35 @@ function surf:drawSurfaceRotated(surf2, x, y, ox, oy, angle)
 	end
 end
 
+function surf:drawSurfacesInterlaced(surfs, x, y, step)
+	x, y, step = x + self.ox, y + self.oy, step or 0
+	local width, height = surfs[1].width, surfs[1].height
+	for i = 2, #surfs do
+		if surfs[i].width ~= width or surfs[i].height ~= height then
+			error("surfaces should be the same size")
+		end
+	end
+	
+	local sx, sy, swidth, sheight, index, b, t, c = clipRect(x, y, width, height, self.cx, self.cy, self.cwidth, self.cheight)
+	for j = sy, sy + sheight - 1 do
+		for i = sx, sx + swidth - 1 do
+			index = (i + j + step) % #surfs + 1
+			b = surfs[index].buffer[((j - sy) * surfs[index].width + i - sx) * 3 + 1]
+			t = surfs[index].buffer[((j - sy) * surfs[index].width + i - sx) * 3 + 2]
+			c = surfs[index].buffer[((j - sy) * surfs[index].width + i - sx) * 3 + 3]
+			if b or self.overwrite then
+				self.buffer[(j * self.width + i) * 3 + 1] = b
+			end
+			if t or self.overwrite then
+				self.buffer[(j * self.width + i) * 3 + 2] = t
+			end
+			if c or self.overwrite then
+				self.buffer[(j * self.width + i) * 3 + 3] = c
+			end
+		end
+	end
+end
+
 function surf:drawSurfaceSmall(surf2, x, y)
 	x, y = x + self.ox, y + self.oy
 	if surf2.width % 2 ~= 0 or surf2.height % 3 ~= 0 then
