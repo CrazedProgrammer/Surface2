@@ -27,7 +27,7 @@ do
 local surf = { }
 surface.surf = surf
 
-local table_concat, math_floor = table.concat, math.floor
+local table_concat, math_floor, math_atan2 = table.concat, math.floor, math.atan2
 
 local _cc_color_to_hex, _cc_hex_to_color = { }, { }
 for i = 0, 15 do
@@ -704,6 +704,12 @@ function surf:fillRect(x, y, width, height, b, t, c)
 	end
 end
 
+function surf:drawTriangle(x1, y1, x2, y2, x3, y3, b, t, c)
+	self:drawLine(x1, y1, x2, y2, b, t, c)
+	self:drawLine(x2, y2, x3, y3, b, t, c)
+	self:drawLine(x3, y3, x1, y1, b, t, c)
+end
+
 function surf:drawEllipse(x, y, width, height, b, t, c)
 	for i = 0, _eprc - 1 do
 		self:drawLine(math_floor(x + _ecos[i + 1] * (width - 1) + 0.5), math_floor(y + _esin[i + 1] * (height - 1) + 0.5), math_floor(x + _ecos[(i + 1) % _eprc + 1] * (width - 1) + 0.5), math_floor(y + _esin[(i + 1) % _eprc + 1] * (height - 1) + 0.5), b, t, c)
@@ -716,6 +722,52 @@ function surf:fillEllipse(x, y, width, height, b, t, c)
 	for j = 0, height - 1 do
 		for i = 0, width - 1 do
 			if ((i + 0.5) / width * 2 - 1) ^ 2 + ((j + 0.5) / height * 2 - 1) ^ 2 <= 1 then
+				if b or self.overwrite then 
+					self.buffer[((j + y) * self.width + i + x) * 3 + 1] = b
+				end
+				if t or self.overwrite then
+					self.buffer[((j + y) * self.width + i + x) * 3 + 2] = t
+				end
+				if c or self.overwrite then 
+					self.buffer[((j + y) * self.width + i + x) * 3 + 3] = c
+				end
+			end
+		end
+	end
+end
+
+function surf:drawArc(x, y, width, height, fromangle, toangle, b, t, c)
+	if fromangle > toangle then
+		local temp = fromangle
+		fromangle = toangle
+		temp = toangle
+	end
+	fromangle = math_floor(fromangle / math.pi / 2 * _eprc + 0.5)
+	toangle = math_floor(toangle / math.pi / 2 * _eprc + 0.5) - 1
+	
+	for j = fromangle, toangle do
+		local i = j % _eprc
+		self:drawLine(math_floor(x + _ecos[i + 1] * (width - 1) + 0.5), math_floor(y + _esin[i + 1] * (height - 1) + 0.5), math_floor(x + _ecos[(i + 1) % _eprc + 1] * (width - 1) + 0.5), math_floor(y + _esin[(i + 1) % _eprc + 1] * (height - 1) + 0.5), b, t, c)
+	end
+end
+
+function surf:fillArc(x, y, width, height, fromangle, toangle, b, t, c)
+	x, y = x + self.ox, y + self.oy
+
+	if fromangle > toangle then
+		local temp = fromangle
+		fromangle = toangle
+		temp = toangle
+	end
+	local diff = toangle - fromangle
+	fromangle = fromangle % (math.pi * 2)
+
+	local fx, fy, dir
+	for j = 0, height - 1 do
+		for i = 0, width - 1 do
+			fx, fy = (i + 0.5) / width * 2 - 1, (j + 0.5) / height * 2 - 1
+			dir = math_atan2(-fy, fx) % (math.pi * 2)
+			if fx ^ 2 + fy ^ 2 <= 1 and ((dir >= fromangle and dir - fromangle <= diff) or (dir <= (fromangle + diff) % (math.pi * 2))) then
 				if b or self.overwrite then 
 					self.buffer[((j + y) * self.width + i + x) * 3 + 1] = b
 				end
@@ -960,7 +1012,7 @@ function surf:flip(horizontal, vertical)
 	end
 end
 
-function surf:shift(x, y)
+function surf:shift(x, y, b, t, c)
 	local hdir, vdir = x < 0, y < 0
 	local xstart, xend = self.cx, self.cx + self.cwidth - 1
 	local ystart, yend = self.cy, self.cy + self.cheight - 1
@@ -973,9 +1025,9 @@ function surf:shift(x, y)
 				self.buffer[(j * self.width + i) * 3 + 2] = self.buffer[(ny * self.width + nx) * 3 + 2]
 				self.buffer[(j * self.width + i) * 3 + 3] = self.buffer[(ny * self.width + nx) * 3 + 3] 
 			else
-				self.buffer[(j * self.width + i) * 3 + 1] = nil
-				self.buffer[(j * self.width + i) * 3 + 2] = nil
-				self.buffer[(j * self.width + i) * 3 + 3] = nil
+				self.buffer[(j * self.width + i) * 3 + 1] = b
+				self.buffer[(j * self.width + i) * 3 + 2] = t
+				self.buffer[(j * self.width + i) * 3 + 3] = c
 			end
 		end
 	end
