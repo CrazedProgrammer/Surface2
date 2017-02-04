@@ -104,8 +104,7 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 
 	local buffer = self.buffer
 	local bwidth = self.width
-	local xoffset = nil
-	local yoffset = nil
+	local xoffset, yoffset, idx
 
 	if output.blit and output.setCursorPos then
 		-- CC
@@ -114,7 +113,7 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 			yoffset = (j + sy) * bwidth + sx
 			for i = 0, swidth - 1 do
 				xoffset = (yoffset + i) * 3
-				local idx = i + 1
+				idx = i + 1
 				str[idx] = buffer[xoffset + 3] or " "
 				text[idx] = _cc_color_to_hex[buffer[xoffset + 2] or 1]
 				back[idx] = _cc_color_to_hex[buffer[xoffset + 1] or 32768]
@@ -246,8 +245,7 @@ function surf:copy()
 end
 
 function surf:clear(b, t, c)
-	local yoffset = nil
-	local xoffset = nil
+	local xoffset, yoffset
 
 	for j = 0, self.cheight - 1 do
 		yoffset = (j + self.cy) * self.width + self.cx
@@ -283,32 +281,32 @@ function surf:drawString(x, y, str, b, t)
 	x, y = x + self.ox, y + self.oy
 
 	local sx = x
-	local inside_y = y >= self.cy and y < self.cy + self.cheight
+	local insidey = y >= self.cy and y < self.cy + self.cheight
 	local idx = nil
-	local lower_x_lim = self.cx
-	local upper_x_lim = self.cx + self.cwidth
-	local write_b = b or self.overwrite
-	local write_t = t or self.overwrite
+	local lowerxlim = self.cx
+	local upperxlim = self.cx + self.cwidth
+	local writeb = b or self.overwrite
+	local writet = t or self.overwrite
 
 	for i = 1, #str do
 		local c = str:sub(i, i)
 		if c == "\n" then
 			x = sx
 			y = y + 1
-			if inside_y then
+			if insidey then
 				if y >= self.cy + self.cheight then
 					return
 				end
 			else
-				inside_y = y >= self.cy
+				insidey = y >= self.cy
 			end
 		else
 			idx = (y * self.width + x) * 3
-			if x >= lower_x_lim and x < upper_x_lim and inside_y then
-				if write_b then
+			if x >= lowerxlim and x < upperxlim and insidey then
+				if writeb then
 					self.buffer[idx + 1] = b
 				end
-				if write_t then
+				if writet then
 					self.buffer[idx + 2] = t
 				end
 				self.buffer[idx + 3] = c
