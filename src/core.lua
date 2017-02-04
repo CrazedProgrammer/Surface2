@@ -104,14 +104,16 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 
 	local buffer = self.buffer
 	local bwidth = self.width
+	local xoffset = nil
+	local yoffset = nil
 
 	if output.blit and output.setCursorPos then
 		-- CC
-		local cmd, str, text, back = {}, {}, {}, {} -- empty tables are empty
+		local cmd, str, text, back = { }, { }, { }, { }
 		for j = 0, sheight - 1 do
-			local yoffset = (j + sy) * bwidth + sx
+			yoffset = (j + sy) * bwidth + sx
 			for i = 0, swidth - 1 do
-				local xoffset = (yoffset + i) * 3
+				xoffset = (yoffset + i) * 3
 				local idx = i + 1
 				str[idx] = buffer[xoffset + 3] or " "
 				text[idx] = _cc_color_to_hex[buffer[xoffset + 2] or 1]
@@ -126,9 +128,9 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 		local str, b, t, pb, pt = { }
 		for j = 0, sheight - 1 do
 			output.setCursorPos(x + 1, y + j + 1)
-			local yoffset = (j + sy) * bwidth + sx
+			yoffset = (j + sy) * bwidth + sx
 			for i = 0, swidth - 1 do
-				local xoffset = (yoffset + i) * 3
+				xoffset = (yoffset + i) * 3
 				pb = buffer[xoffset + 1] or 32768
 				pt = buffer[xoffset + 2] or 1
 				if pb ~= b then
@@ -157,7 +159,7 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 		-- Riko 4
 		local pixels = { }
 		for j = 0, sheight - 1 do
-			local yoffset = (j + sy) * bwidth + sx
+			yoffset = (j + sy) * bwidth + sx
 			for i = 0, swidth - 1 do
 				pixels[j * swidth + i + 1] = buffer[(yoffset + i) * 3 + 1] or 0
 			end
@@ -168,9 +170,9 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 		-- Love2D
 		local pos, r, g, b, pr, pg, pb = { }
 		for j = 0, sheight - 1 do
-			local yoffset = (j + sy) * bwidth + sx
+			yoffset = (j + sy) * bwidth + sx
 			for i = 0, swidth - 1 do
-				local xoffset = (yoffset + i) * 3
+				xoffset = (yoffset + i) * 3
 				pr = buffer[xoffset + 1]
 				pg = buffer[xoffset + 2]
 				pb = buffer[xoffset + 3]
@@ -244,27 +246,35 @@ function surf:copy()
 end
 
 function surf:clear(b, t, c)
+	local yoffset = nil
+	local xoffset = nil
+
 	for j = 0, self.cheight - 1 do
+		yoffset = (j + self.cy) * self.width + self.cx
 		for i = 0, self.cwidth - 1 do
-			self.buffer[((j + self.cy) * self.width + i + self.cx) * 3 + 1] = b
-			self.buffer[((j + self.cy) * self.width + i + self.cx) * 3 + 2] = t
-			self.buffer[((j + self.cy) * self.width + i + self.cx) * 3 + 3] = c
+			xoffset = (yoffset + i) * 3
+			self.buffer[xoffset + 1] = b
+			self.buffer[xoffset + 2] = t
+			self.buffer[xoffset + 3] = c
 		end
 	end
 end
 
 function surf:drawPixel(x, y, b, t, c)
+	local idx = nil
+
 	x, y = x + self.ox, y + self.oy
 
 	if x >= self.cx and x < self.cx + self.cwidth and y >= self.cy and y < self.cy + self.cheight then
+		idx = (y * self.width + x) * 3
 		if b or self.overwrite then
-			self.buffer[(y * self.width + x) * 3 + 1] = b
+			self.buffer[idx + 1] = b
 		end
 		if t or self.overwrite then
-			self.buffer[(y * self.width + x) * 3 + 2] = t
+			self.buffer[idx + 2] = t
 		end
 		if c or self.overwrite then
-			self.buffer[(y * self.width + x) * 3 + 3] = c
+			self.buffer[idx + 3] = c
 		end
 	end
 end
@@ -273,20 +283,35 @@ function surf:drawString(x, y, str, b, t)
 	x, y = x + self.ox, y + self.oy
 
 	local sx = x
+	local inside_y = y >= self.cy and y < self.cy + self.cheight
+	local idx = nil
+	local lower_x_lim = self.cx
+	local upper_x_lim = self.cx + self.cwidth
+	local write_b = b or self.overwrite
+	local write_t = t or self.overwrite
+
 	for i = 1, #str do
 		local c = str:sub(i, i)
 		if c == "\n" then
 			x = sx
 			y = y + 1
+			if inside_y then
+				if y >= self.cy + self.cheight then
+					return
+				end
+			else
+				inside_y = y >= self.cy
+			end
 		else
-			if x >= self.cx  and x < self.cx + self.cwidth and y >= self.cy and y < self.cy + self.cheight then
-				if b or self.overwrite then
-					self.buffer[(y * self.width + x) * 3 + 1] = b
+			idx = (y * self.width + x) * 3
+			if x >= lower_x_lim and x < upper_x_lim and inside_y then
+				if write_b then
+					self.buffer[idx + 1] = b
 				end
-				if t or self.overwrite then
-					self.buffer[(y * self.width + x) * 3 + 2] = t
+				if write_t then
+					self.buffer[idx + 2] = t
 				end
-				self.buffer[(y * self.width + x) * 3 + 3] = c
+				self.buffer[idx + 3] = c
 			end
 			x = x + 1
 		end
