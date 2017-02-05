@@ -122,6 +122,67 @@ function surf:drawTriangle(x1, y1, x2, y2, x3, y3, b, t, c)
 	self:drawLine(x3, y3, x1, y1, b, t, c)
 end
 
+function surf:fillTriangle(x1, y1, x2, y2, x3, y3, b, t, c)
+	if y1 > y2 then
+		local tempx, tempy = x1, y1
+		x1, y1 = x2, y2
+		x2, y2 = tempx, tempy
+	end
+	if y1 > y3 then
+		local tempx, tempy = x1, y1
+		x1, y1 = x3, y3
+		x3, y3 = tempx, tempy
+	end
+	if y2 > y3 then
+		local tempx, tempy = x2, y2
+		x2, y2 = x3, y3
+		x3, y3 = tempx, tempy
+	end
+	if y1 == y2 and x1 > x2 then
+		local temp = x1
+		x1 = x2
+		x2 = temp
+	end
+	if y2 == y3 and x2 > x3 then
+		local temp = x2
+		x2 = x3
+		x3 = temp
+	end
+
+	local x4, y4
+	if x1 <= x2 then
+		x4 = x1 + (y2 - y1) / (y3 - y1) * (x3 - x1)
+		y4 = y2
+		local tempx, tempy = x2, y2
+		x2, y2 = x4, y4
+		x4, y4 = tempx, tempy
+	else
+		x4 = x1 + (y2 - y1) / (y3 - y1) * (x3 - x1)
+		y4 = y2
+	end
+
+	local finvslope1 = (x2 - x1) / (y2 - y1)
+	local finvslope2 = (x4 - x1) / (y4 - y1)
+	local linvslope1 = (x3 - x2) / (y3 - y2)
+	local linvslope2 = (x3 - x4) / (y3 - y4)
+
+	local xstart, xend, dxstart, dxend
+	for y = math.ceil(y1 + 0.5) - 0.5, math.floor(y3 - 0.5) + 0.5, 1 do
+		if y <= y2 then -- first half
+			xstart = x1 + finvslope1 * (y - y1)
+			xend = x1 + finvslope2 * (y - y1)
+		else -- second half
+			xstart = x3 - linvslope1 * (y3 - y)
+			xend = x3 - linvslope2 * (y3 - y)
+		end
+
+		dxstart, dxend = math.ceil(xstart - 0.5), math.floor(xend - 0.5)
+		if dxstart <= dxend then
+			self:drawLine(dxstart, y - 0.5, dxend, y - 0.5, b, t, c)
+		end
+	end
+end
+
 function surf:drawEllipse(x, y, width, height, b, t, c)
 	for i = 0, _eprc - 1 do
 		self:drawLine(math_floor(x + _ecos[i + 1] * (width - 1) + 0.5), math_floor(y + _esin[i + 1] * (height - 1) + 0.5), math_floor(x + _ecos[(i + 1) % _eprc + 1] * (width - 1) + 0.5), math_floor(y + _esin[(i + 1) % _eprc + 1] * (height - 1) + 0.5), b, t, c)
