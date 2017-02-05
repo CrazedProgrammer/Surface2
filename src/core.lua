@@ -64,7 +64,7 @@ function surface.create(width, height, b, t, c)
 	surface.stack = { }
 	surface.ox, surface.oy, surface.cx, surface.cy, surface.cwidth, surface.cheight = calcStack(surface.stack, width, height)
 	-- force array indeces instead of hashed indices
-	
+
 	local buffer = surface.buffer
 	for i = 1, width * height * 3, 3 do
 		buffer[i] = b or false
@@ -259,10 +259,9 @@ function surf:clear(b, t, c)
 end
 
 function surf:drawPixel(x, y, b, t, c)
-	local idx = nil
-
 	x, y = x + self.ox, y + self.oy
 
+	local idx
 	if x >= self.cx and x < self.cx + self.cwidth and y >= self.cy and y < self.cy + self.cheight then
 		idx = (y * self.width + x) * 3
 		if b or self.overwrite then
@@ -282,7 +281,7 @@ function surf:drawString(x, y, str, b, t)
 
 	local sx = x
 	local insidey = y >= self.cy and y < self.cy + self.cheight
-	local idx = nil
+	local idx
 	local lowerxlim = self.cx
 	local upperxlim = self.cx + self.cwidth
 	local writeb = b or self.overwrite

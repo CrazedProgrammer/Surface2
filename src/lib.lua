@@ -29,3 +29,4 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 --#include drawsurf
 --#include manipulate
 --#include rgb
+--#include font
