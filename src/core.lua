@@ -63,8 +63,13 @@ function surface.create(width, height, b, t, c)
 	surface.overwrite = false
 	surface.stack = { }
 	surface.ox, surface.oy, surface.cx, surface.cy, surface.cwidth, surface.cheight = calcStack(surface.stack, width, height)
+<<<<<<< HEAD
 	
 	-- force array indeces instead of hashed indices
+=======
+
+	-- force array indeces instead of hashed indeces
+>>>>>>> 687ed080f2ccae407352d6d1395b61d6a8cd2afa
 	local buffer = surface.buffer
 	for i = 1, width * height * 3, 3 do
 		buffer[i] = b or false
@@ -87,7 +92,7 @@ function surface.create(width, height, b, t, c)
 			buffer[i] = c
 		end
 	end
-	
+
 	return surface
 end
 
@@ -101,18 +106,22 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 	swidth = swidth or self.width
 	sheight = sheight or self.height
 	sx, sy, swidth, sheight = clipRect(sx, sy, swidth, sheight, 0, 0, self.width, self.height)
-	
+
 	local buffer = self.buffer
 	local bwidth = self.width
+	local xoffset, yoffset, idx
 
 	if output.blit and output.setCursorPos then
 		-- CC
 		local cmd, str, text, back = { }, { }, { }, { }
 		for j = 0, sheight - 1 do
+			yoffset = (j + sy) * bwidth + sx
 			for i = 0, swidth - 1 do
-				str[i + 1] = buffer[((j + sy) * bwidth + (i + sx)) * 3 + 3] or " "
-				text[i + 1] = _cc_color_to_hex[buffer[((j + sy) * bwidth + (i + sx)) * 3 + 2] or 1]
-				back[i + 1] = _cc_color_to_hex[buffer[((j + sy) * bwidth + (i + sx)) * 3 + 1] or 32768]
+				xoffset = (yoffset + i) * 3
+				idx = i + 1
+				str[idx] = buffer[xoffset + 3] or " "
+				text[idx] = _cc_color_to_hex[buffer[xoffset + 2] or 1]
+				back[idx] = _cc_color_to_hex[buffer[xoffset + 1] or 32768]
 			end
 			output.setCursorPos(x + 1, y + j + 1)
 			output.blit(table_concat(str), table_concat(text), table_concat(back))
@@ -123,9 +132,11 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 		local str, b, t, pb, pt = { }
 		for j = 0, sheight - 1 do
 			output.setCursorPos(x + 1, y + j + 1)
+			yoffset = (j + sy) * bwidth + sx
 			for i = 0, swidth - 1 do
-				pb = buffer[((j + sy) * bwidth + (i + sx)) * 3 + 1] or 32768
-				pt = buffer[((j + sy) * bwidth + (i + sx)) * 3 + 2] or 1
+				xoffset = (yoffset + i) * 3
+				pb = buffer[xoffset + 1] or 32768
+				pt = buffer[xoffset + 2] or 1
 				if pb ~= b then
 					if #str ~= 0 then
 						output.write(table_concat(str))
@@ -142,31 +153,34 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 					t = pt
 					output.setTextColor(t)
 				end
-				str[#str + 1] = buffer[((j + sy) * bwidth + (i + sx)) * 3 + 3] or " "
+				str[#str + 1] = buffer[xoffset + 3] or " "
 			end
 			output.write(table_concat(str))
 			str = { }
 		end
-	
+
 	elseif output.blitPixels then
 		-- Riko 4
 		local pixels = { }
 		for j = 0, sheight - 1 do
+			yoffset = (j + sy) * bwidth + sx
 			for i = 0, swidth - 1 do
-				pixels[j * swidth + i + 1] = buffer[((j + sy) * bwidth + (i + sx)) * 3 + 1] or 0
+				pixels[j * swidth + i + 1] = buffer[(yoffset + i) * 3 + 1] or 0
 			end
 		end
 		output.blitPixels(x, y, swidth, sheight, pixels)
-	
+
 	elseif output.points and output.setColor then
 		-- Love2D
 		local pos, r, g, b, pr, pg, pb = { }
 		for j = 0, sheight - 1 do
+			yoffset = (j + sy) * bwidth + sx
 			for i = 0, swidth - 1 do
-				pr = buffer[((j + sy) * bwidth + (i + sx)) * 3 + 1]
-				pg = buffer[((j + sy) * bwidth + (i + sx)) * 3 + 2]
-				pb = buffer[((j + sy) * bwidth + (i + sx)) * 3 + 3]
-				if pr ~= r or pg ~= g or pb ~= b then 
+				xoffset = (yoffset + i) * 3
+				pr = buffer[xoffset + 1]
+				pg = buffer[xoffset + 2]
+				pb = buffer[xoffset + 3]
+				if pr ~= r or pg ~= g or pb ~= b then
 					if #pos ~= 0 then
 						output.setColor((r or 0) * 255, (g or 0) * 255, (b or 0) * 255, (r or g or b) and 255 or 0)
 						output.points(pos)
@@ -178,7 +192,7 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 				pos[#pos + 1] = j + y
 			end
 		end
-	
+
 	elseif output.drawPixel then
 		-- Redirection arcade (gpu)
 		-- todo: add image:write support for extra performance
@@ -200,7 +214,7 @@ function surf:push(x, y, width, height, nooffset)
 	local ox, oy = nooffset and self.ox or x, nooffset and self.oy or y
 	x, y, width, height = clipRect(x, y, width, height, self.cx, self.cy, self.cwidth, self.cheight)
 	self.stack[#self.stack + 1] = {ox = ox - self.ox, oy = oy - self.oy, x = x - self.cx, y = y - self.cy, width = width, height = height}
-	
+
 	self.ox, self.oy, self.cx, self.cy, self.cwidth, self.cheight = calcStack(self.stack, self.width, self.height)
 end
 
@@ -214,11 +228,11 @@ end
 
 function surf:copy()
 	local surface = setmetatable({ }, {__index = surface.surf})
-	
+
 	for k, v in pairs(self) do
 		surface[k] = v
 	end
-	
+
 	surface.buffer = { }
 	for i = 1, self.width * self.height * 3 + 1 do
 		surface.buffer[i] = false
@@ -231,32 +245,39 @@ function surf:copy()
 	for i = 1, #self.stack do
 		surface.stack[i] = self.stack[i]
 	end
-	
+
 	return surface
 end
 
 function surf:clear(b, t, c)
+	local xoffset, yoffset
+
 	for j = 0, self.cheight - 1 do
+		yoffset = (j + self.cy) * self.width + self.cx
 		for i = 0, self.cwidth - 1 do
-			self.buffer[((j + self.cy) * self.width + i + self.cx) * 3 + 1] = b
-			self.buffer[((j + self.cy) * self.width + i + self.cx) * 3 + 2] = t
-			self.buffer[((j + self.cy) * self.width + i + self.cx) * 3 + 3] = c
+			xoffset = (yoffset + i) * 3
+			self.buffer[xoffset + 1] = b
+			self.buffer[xoffset + 2] = t
+			self.buffer[xoffset + 3] = c
 		end
 	end
 end
 
 function surf:drawPixel(x, y, b, t, c)
+	local idx = nil
+
 	x, y = x + self.ox, y + self.oy
 
 	if x >= self.cx and x < self.cx + self.cwidth and y >= self.cy and y < self.cy + self.cheight then
-		if b or self.overwrite then 
-			self.buffer[(y * self.width + x) * 3 + 1] = b
+		idx = (y * self.width + x) * 3
+		if b or self.overwrite then
+			self.buffer[idx + 1] = b
 		end
 		if t or self.overwrite then
-			self.buffer[(y * self.width + x) * 3 + 2] = t
+			self.buffer[idx + 2] = t
 		end
-		if c or self.overwrite then 
-			self.buffer[(y * self.width + x) * 3 + 3] = c
+		if c or self.overwrite then
+			self.buffer[idx + 3] = c
 		end
 	end
 end
@@ -265,20 +286,35 @@ function surf:drawString(x, y, str, b, t)
 	x, y = x + self.ox, y + self.oy
 
 	local sx = x
+	local insidey = y >= self.cy and y < self.cy + self.cheight
+	local idx = nil
+	local lowerxlim = self.cx
+	local upperxlim = self.cx + self.cwidth
+	local writeb = b or self.overwrite
+	local writet = t or self.overwrite
+
 	for i = 1, #str do
 		local c = str:sub(i, i)
 		if c == "\n" then
 			x = sx
 			y = y + 1
+			if insidey then
+				if y >= self.cy + self.cheight then
+					return
+				end
+			else
+				insidey = y >= self.cy
+			end
 		else
-			if x >= self.cx  and x < self.cx + self.cwidth and y >= self.cy and y < self.cy + self.cheight then
-				if b or self.overwrite then 
-					self.buffer[(y * self.width + x) * 3 + 1] = b
+			idx = (y * self.width + x) * 3
+			if x >= lowerxlim and x < upperxlim and insidey then
+				if writeb then
+					self.buffer[idx + 1] = b
 				end
-				if t or self.overwrite then
-					self.buffer[(y * self.width + x) * 3 + 2] = t
+				if writet then
+					self.buffer[idx + 2] = t
 				end
-				self.buffer[(y * self.width + x) * 3 + 3] = c
+				self.buffer[idx + 3] = c
 			end
 			x = x + 1
 		end
