@@ -63,13 +63,8 @@ function surface.create(width, height, b, t, c)
 	surface.overwrite = false
 	surface.stack = { }
 	surface.ox, surface.oy, surface.cx, surface.cy, surface.cwidth, surface.cheight = calcStack(surface.stack, width, height)
-<<<<<<< HEAD
-	
 	-- force array indeces instead of hashed indices
-=======
-
-	-- force array indeces instead of hashed indeces
->>>>>>> 687ed080f2ccae407352d6d1395b61d6a8cd2afa
+	
 	local buffer = surface.buffer
 	for i = 1, width * height * 3, 3 do
 		buffer[i] = b or false
