@@ -32,6 +32,29 @@ function surface.loadFont(surf)
 	return font
 end
 
+function surface.getTextSize(str, font)
+	local cx, cy, maxx = 0, 0, 0
+	local ox, char = cx
+
+	for i = 1, #str do
+		char = str:byte(i) - 31
+
+		if char + 31 == 10 then -- newline
+			cx = ox
+			cy = cy + font.height + 1
+		elseif font.indices[char] then
+			cx = cx + font.widths[char] + 1
+		else
+			cx = cx + font.widths[1]
+		end
+		if cx > maxx then
+			maxx = cx
+		end
+	end
+
+	return maxx - 1, cy + font.height
+end
+
 function surf:drawText(str, x, y, font, b, t, c)
 	local cx, cy = x + self.ox, y + self.oy
 	local ox, char, idx = cx
