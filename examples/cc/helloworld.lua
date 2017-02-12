@@ -1,5 +1,5 @@
 -- Loads Surface 2.
--- Change this path to wherever the surface 2 file is.
+-- Change this path to wherever the Surface 2 file is.
 local surface = dofile("Surface2/target/surface") 
 
 -- Creates a new surface with a blue background with a size of 51x19 pixels.
