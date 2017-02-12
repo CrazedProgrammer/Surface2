@@ -55,7 +55,7 @@ function surface.getTextSize(str, font)
 	return maxx - 1, cy + font.height
 end
 
-function surf:drawText(x, y, str, font, b, t, c)
+function surf:drawText(str, font, x, y, b, t, c)
 	local cx, cy = x + self.ox, y + self.oy
 	local ox, char, idx = cx
 

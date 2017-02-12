@@ -276,7 +276,7 @@ function surf:drawPixel(x, y, b, t, c)
 	end
 end
 
-function surf:drawString(x, y, str, b, t)
+function surf:drawString(str, x, y, b, t)
 	x, y = x + self.ox, y + self.oy
 
 	local sx = x
