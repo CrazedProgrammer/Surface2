@@ -192,17 +192,19 @@ end
 function surf:fillEllipse(x, y, width, height, b, t, c)
 	x, y = x + self.ox, y + self.oy
 
+	local sx, sy
 	for j = 0, height - 1 do
 		for i = 0, width - 1 do
-			if ((i + 0.5) / width * 2 - 1) ^ 2 + ((j + 0.5) / height * 2 - 1) ^ 2 <= 1 then
+			sx, sy = i + x, j + y
+			if ((i + 0.5) / width * 2 - 1) ^ 2 + ((j + 0.5) / height * 2 - 1) ^ 2 <= 1 and sx >= self.cx and sx < self.cx + self.cwidth and sy >= self.cy and sy < self.cy + self.cheight then
 				if b or self.overwrite then 
-					self.buffer[((j + y) * self.width + i + x) * 3 + 1] = b
+					self.buffer[(sy * self.width + sx) * 3 + 1] = b
 				end
 				if t or self.overwrite then
-					self.buffer[((j + y) * self.width + i + x) * 3 + 2] = t
+					self.buffer[(sy * self.width + sx) * 3 + 2] = t
 				end
 				if c or self.overwrite then 
-					self.buffer[((j + y) * self.width + i + x) * 3 + 3] = c
+					self.buffer[(sy * self.width + sx) * 3 + 3] = c
 				end
 			end
 		end
@@ -235,20 +237,21 @@ function surf:fillArc(x, y, width, height, fromangle, toangle, b, t, c)
 	local diff = toangle - fromangle
 	fromangle = fromangle % (math.pi * 2)
 
-	local fx, fy, dir
+	local fx, fy, sx, sy, dir
 	for j = 0, height - 1 do
 		for i = 0, width - 1 do
 			fx, fy = (i + 0.5) / width * 2 - 1, (j + 0.5) / height * 2 - 1
+			sx, sy = i + x, j + y
 			dir = math_atan2(-fy, fx) % (math.pi * 2)
-			if fx ^ 2 + fy ^ 2 <= 1 and ((dir >= fromangle and dir - fromangle <= diff) or (dir <= (fromangle + diff) % (math.pi * 2))) then
+			if fx ^ 2 + fy ^ 2 <= 1 and ((dir >= fromangle and dir - fromangle <= diff) or (dir <= (fromangle + diff) % (math.pi * 2))) and sx >= self.cx and sx < self.cx + self.cwidth and sy >= self.cy and sy < self.cy + self.cheight then
 				if b or self.overwrite then 
-					self.buffer[((j + y) * self.width + i + x) * 3 + 1] = b
+					self.buffer[(sy * self.width + sx) * 3 + 1] = b
 				end
 				if t or self.overwrite then
-					self.buffer[((j + y) * self.width + i + x) * 3 + 2] = t
+					self.buffer[(sy * self.width + sx) * 3 + 2] = t
 				end
 				if c or self.overwrite then 
-					self.buffer[((j + y) * self.width + i + x) * 3 + 3] = c
+					self.buffer[(sy * self.width + sx) * 3 + 3] = c
 				end
 			end
 		end
