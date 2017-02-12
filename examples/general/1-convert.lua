@@ -3,7 +3,7 @@
 local surface = dofile("Surface2/target/surface") 
 
 -- Loads the font.nfp image.
-local surf = surface.load("Surface2/examples/font.nfp")
+local surf = surface.load("Surface2/examples/cc/font.nfp")
 
 -- Converts the surface to RGB.
 surf:toRGB(surface.palette.cc)
