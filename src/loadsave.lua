@@ -198,7 +198,7 @@ function surf:save(file, format)
 		data[8] = string.char(0x13, 0x0B, 0, 0, 0x13, 0x0B, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
 		local padchars = math.ceil((self.width * 3) / 4) * 4 - self.width * 3
-		for j = 0, self.height - 1 do
+		for j = self.height - 1, 0, -1 do
 			for i = 0, self.width - 1 do
 				data[#data + 1] = string.char((self.buffer[(j * self.width + i) * 3 + 1] or 0) * 255)
 				data[#data + 1] = string.char((self.buffer[(j * self.width + i) * 3 + 2] or 0) * 255)
