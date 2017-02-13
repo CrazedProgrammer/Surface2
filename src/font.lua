@@ -27,7 +27,7 @@ function surface.loadFont(surf)
 			font.indices[curchar] = i + 1
 		end
 	end
-	font.widths[curchar] = font.width - font.indices[curchar] + 1
+	font.widths[curchar] = font.width - font.indices[curchar]
 
 	return font
 end
