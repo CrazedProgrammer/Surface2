@@ -183,10 +183,12 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 					r, g, b = pr, pg, pb
 					pos = { }
 				end
-				pos[#pos + 1] = i + x
-				pos[#pos + 1] = j + y
+				pos[#pos + 1] = i + x + 1
+				pos[#pos + 1] = j + y + 1
 			end
 		end
+		output.setColor((r or 0) * 255, (g or 0) * 255, (b or 0) * 255, (r or g or b) and 255 or 0)
+		output.points(pos)
 
 	elseif output.drawPixel then
 		-- Redirection arcade (gpu)
