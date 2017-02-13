@@ -3,11 +3,18 @@ function surface.load(strpath, isstr)
 	if not isstr then
 		local handle = io.open(strpath, "rb")
 		if not handle then return end
-		chars = { }
+		local chars = { }
 		local byte = handle:read(1)
-		while byte do
-			chars[#chars + 1] = _chars[byte]
-			byte = handle:read(1)
+		if type(byte) == "number" then -- cc doesn't conform to standards
+			while byte do
+				chars[#chars + 1] = _chars[byte]
+				byte = handle:read(1)
+			end
+		else
+			while byte do
+				chars[#chars + 1] = byte
+				byte = handle:read(1)
+			end
 		end
 		handle:close()
 		data = table_concat(chars)

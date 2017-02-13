@@ -1,5 +1,5 @@
 --[[
-Surface version 2.0.0
+Surface 2
 
 The MIT License (MIT)
 Copyright (c) 2017 CrazedProgrammer

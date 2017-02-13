@@ -108,7 +108,7 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 
 	if output.blit and output.setCursorPos then
 		-- CC
-		local cmd, str, text, back = { }, { }, { }, { }
+		local str, text, back = { }, { }, { }
 		for j = 0, sheight - 1 do
 			yoffset = (j + sy) * bwidth + sx
 			for i = 0, swidth - 1 do
