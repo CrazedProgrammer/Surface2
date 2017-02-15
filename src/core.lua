@@ -200,6 +200,41 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 			end
 		end
 
+	elseif output.setForeground and output.setBackground and output.set then
+		-- OpenComputers
+		
+		local str, lx, b, t, pb, pt = { }
+		for j = 0, sheight - 1 do
+			lx = x
+			yoffset = (j + sy) * bwidth + sx
+			for i = 0, swidth - 1 do
+				xoffset = (yoffset + i) * 3
+				pb = buffer[xoffset + 1] or 0x000000
+				pt = buffer[xoffset + 2] or 0xFFFFFF
+				if pb ~= b then
+					if #str ~= 0 then
+						output.set(lx + 1, j + y + 1, table_concat(str))
+						lx = i + x
+						str = { }
+					end
+					b = pb
+					output.setBackground(b)
+				end
+				if pt ~= t then
+					if #str ~= 0 then
+						output.set(lx + 1, j + y + 1, table_concat(str))
+						lx = i + x
+						str = { }
+					end
+					t = pt
+					output.setForeground(t)
+				end
+				str[#str + 1] = buffer[xoffset + 3] or " "
+			end
+			output.set(lx + 1, j + y + 1, table_concat(str))
+			str = { }
+		end
+
 	else
 		error("unsupported output object")
 	end
