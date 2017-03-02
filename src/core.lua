@@ -91,9 +91,29 @@ function surface.create(width, height, b, t, c)
 	return surface
 end
 
+function surface.getPlatformOutput(output)
+	output = output or (term or gpu or (love and love.graphics))
+
+	if output.blit and output.setCursorPos then
+		return "cc", output, output.getSize()
+	elseif output.write and output.setCursorPos and output.setTextColor and output.setBackgroundColor then
+		return "cc-old", output, output.getSize()
+	elseif output.blitPixels then
+		return "riko-4", output, 320, 200
+	elseif output.points and output.setColor then
+		return "love2d", output, output.getWidth(), output.getHeight()
+	elseif output.drawPixel then
+		return "redirection", output, 64, 64
+	elseif output.setForeground and output.setBackground and output.set then
+		return "oc", output, output.getResolution()
+	else
+		error("unsupported platform/output object")
+	end
+end
+
 function surf:output(output, x, y, sx, sy, swidth, sheight)
-	output = output or (term or gpu)
-	if love then output = output or love.graphics end
+	local platform, output, owidth, oheight = surface.getPlatformOutput(output)
+
 	x = x or 0
 	y = y or 0
 	sx = sx or 0
@@ -106,7 +126,7 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 	local bwidth = self.width
 	local xoffset, yoffset, idx
 
-	if output.blit and output.setCursorPos then
+	if platform == "cc" then
 		-- CC
 		local str, text, back = { }, { }, { }
 		for j = 0, sheight - 1 do
@@ -122,7 +142,7 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 			output.blit(table_concat(str), table_concat(text), table_concat(back))
 		end
 
-	elseif output.write and output.setCursorPos and output.setTextColor and output.setBackgroundColor then
+	elseif platform == "cc-old" then
 		-- CC pre-1.76
 		local str, b, t, pb, pt = { }
 		for j = 0, sheight - 1 do
@@ -154,7 +174,7 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 			str = { }
 		end
 
-	elseif output.blitPixels then
+	elseif platform == "riko-4" then
 		-- Riko 4
 		local pixels = { }
 		for j = 0, sheight - 1 do
@@ -165,7 +185,7 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 		end
 		output.blitPixels(x, y, swidth, sheight, pixels)
 
-	elseif output.points and output.setColor then
+	elseif platform == "love2d" then
 		-- Love2D
 		local pos, r, g, b, pr, pg, pb = { }
 		for j = 0, sheight - 1 do
@@ -190,7 +210,7 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 		output.setColor((r or 0) * 255, (g or 0) * 255, (b or 0) * 255, (r or g or b) and 255 or 0)
 		output.points(pos)
 
-	elseif output.drawPixel then
+	elseif platform == "redirection" then
 		-- Redirection arcade (gpu)
 		-- todo: add image:write support for extra performance
 		local px = output.drawPixel
@@ -200,7 +220,7 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 			end
 		end
 
-	elseif output.setForeground and output.setBackground and output.set then
+	elseif platform == "oc" then
 		-- OpenComputers
 		
 		local str, lx, b, t, pb, pt = { }
@@ -235,8 +255,6 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 			str = { }
 		end
 
-	else
-		error("unsupported output object")
 	end
 end
 
