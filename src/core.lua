@@ -13,6 +13,10 @@ local _chars = { }
 for i = 0, 255 do
 	_chars[i] = string.char(i)
 end
+local _numstr = { }
+for i = 0, 1023 do
+	_numstr[i] = tostring(i)
+end
 
 local _eprc, _esin, _ecos = 20, { }, { }
 for i = 0, _eprc - 1 do
@@ -92,7 +96,7 @@ function surface.create(width, height, b, t, c)
 end
 
 function surface.getPlatformOutput(output)
-	output = output or (term or gpu or (love and love.graphics))
+	output = output or (term or gpu or (love and love.graphics) or io)
 
 	if output.blit and output.setCursorPos then
 		return "cc", output, output.getSize()
@@ -106,6 +110,8 @@ function surface.getPlatformOutput(output)
 		return "redirection", output, 64, 64
 	elseif output.setForeground and output.setBackground and output.set then
 		return "oc", output, output.getResolution()
+	elseif output.write then
+		return "ansi", output, (os.getenv and (os.getenv("COLUMNS"))) or 80, (os.getenv and (os.getenv("LINES"))) or 43
 	else
 		error("unsupported platform/output object")
 	end
@@ -222,7 +228,6 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 
 	elseif platform == "oc" then
 		-- OpenComputers
-		
 		local str, lx, b, t, pb, pt = { }
 		for j = 0, sheight - 1 do
 			lx = x
@@ -255,6 +260,46 @@ function surf:output(output, x, y, sx, sy, swidth, sheight)
 			str = { }
 		end
 
+	elseif platform == "ansi" then
+		-- ANSI terminal
+		local str, b, t, pb, pt = { }
+		for j = 0, sheight - 1 do
+			str[#str + 1] = "\x1b[".._numstr[y + j + 1]..";".._numstr[x + 1].."H"
+			yoffset = (j + sy) * bwidth + sx
+			for i = 0, swidth - 1 do
+				xoffset = (yoffset + i) * 3
+				pb = buffer[xoffset + 1] or 0
+				pt = buffer[xoffset + 2] or 7
+				if pb ~= b then
+					b = pb
+					if b < 8 then
+						str[#str + 1] = "\x1b[".._numstr[40 + b].."m"
+					elseif b < 16 then
+						str[#str + 1] = "\x1b[".._numstr[92 + b].."m"
+					elseif b < 232 then
+						str[#str + 1] = "\x1b[48;2;".._numstr[math_floor((b - 16) / 36 * 85 / 2)]..";".._numstr[math_floor((b - 16) / 6 % 6 * 85 / 2)]..";".._numstr[math_floor((b - 16) % 6 * 85 / 2)].."m"
+					else
+						local gr = _numstr[b * 10 - 2312]
+						str[#str + 1] = "\x1b[48;2;"..gr..";"..gr..";"..gr.."m"
+					end
+				end
+				if pt ~= t then
+					t = pt
+					if t < 8 then
+						str[#str + 1] = "\x1b[".._numstr[30 + t].."m"
+					elseif t < 16 then
+						str[#str + 1] = "\x1b[".._numstr[82 + t].."m"
+					elseif t < 232 then
+						str[#str + 1] = "\x1b[38;2;".._numstr[math_floor((t - 16) / 36 * 85 / 2)]..";".._numstr[math_floor((t - 16) / 6 % 6 * 85 / 2)]..";".._numstr[math_floor((t - 16) % 6 * 85 / 2)].."m"
+					else
+						local gr = _numstr[t * 10 - 2312]
+						str[#str + 1] = "\x1b[38;2;"..gr..";"..gr..";"..gr.."m"
+					end
+				end
+				str[#str + 1] = buffer[xoffset + 3] or " "
+			end
+		end
+		output.write(table_concat(str))
 	end
 end
 
