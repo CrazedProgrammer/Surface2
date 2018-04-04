@@ -1,3 +1,5 @@
+(define-native load-lib!)
+
 (define-native create)
 (define-native get-text-size)
 (define-native load!)

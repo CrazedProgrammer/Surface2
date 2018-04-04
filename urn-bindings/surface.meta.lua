@@ -1,5 +1,10 @@
 local surface = dofile("surface") or {}
 return {
+	["load-lib!"] = (function(path)
+		for k,v in pairs(dofile(path)) do
+			surface[k] = v
+		end
+	end),
 	["create"] = surface.create,
 	["get-text-size"] = surface.getTextSize,
 	["load!"] = surface.load,
