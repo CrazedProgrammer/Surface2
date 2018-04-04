@@ -1,4 +1,4 @@
-(import lua/basic (_G dofile))
+(import lua/basic (dofile))
 
 (define surface-bindings :hidden
   { :create "surface.create"
@@ -42,11 +42,10 @@
     :smap/pos "surface.smap.pos"
     :smap/sprite "surface.smap.sprite"})
 
-
-
-(defmacro load-surface! (path (lib-name 'surface))
-   @(cons `(define ,'surface-native-lib (dofile ,path))
-      (let* [(output '())]
-        (for-pairs (definition native) surface-bindings
-          (push! output `(define ,(string->symbol (.. (symbol->string lib-name) "/" definition)) (.> ,'surface-native-lib ,@(cdr (string/split native "%."))))))
-        output)))
+(defmacro load-surface (path (lib-name 'surface))
+  @(cons `(define ,'surface-native-lib (dofile ,path))
+     (let* [(output '())]
+       (for-pairs (definition native) surface-bindings
+         (push! output `(define ,(string->symbol (.. (symbol->string lib-name) "/" definition))
+                                (.> ,'surface-native-lib ,@(cdr (string/split native "%."))))))
+       output)))
