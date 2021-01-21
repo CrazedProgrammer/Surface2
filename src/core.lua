@@ -344,6 +344,34 @@ function surf:copy()
 	return surface
 end
 
+function surf:resize(width, height, b, t, c)
+	local newbuffer = { }
+	for y = 0, height - 1 do
+		for x = 0, width - 1 do
+			if (x >= 0 and x < self.width) and (y >= 0 and y < self.height) then
+				newbuffer[3 * (y * width + x) + 1] = self.buffer[3 * (y * self.width + x) + 1]
+				newbuffer[3 * (y * width + x) + 2] = self.buffer[3 * (y * self.width + x) + 2]
+				newbuffer[3 * (y * width + x) + 3] = self.buffer[3 * (y * self.width + x) + 3]
+			else
+				if b or self.overwrite then
+					newbuffer[3 * (y * width + x) + 1] = b
+				end
+				if t or self.overwrite then
+					newbuffer[3 * (y * width + x) + 2] = t
+				end
+				if c or self.overwrite then
+					newbuffer[3 * (y * width + x) + 3] = c
+				end
+			end
+		end
+	end
+	newbuffer[3 * width * height + 1] = false
+
+	self.buffer = newbuffer
+	self.width = width
+	self.height = height
+end
+
 function surf:clear(b, t, c)
 	local xoffset, yoffset
 
