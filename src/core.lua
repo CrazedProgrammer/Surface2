@@ -368,8 +368,8 @@ function surf:resize(width, height, b, t, c)
 	newbuffer[3 * width * height + 1] = false
 
 	self.buffer = newbuffer
-	self.width = width
-	self.height = height
+	self.width, self.cwidth = width, width
+	self.height, self.cheight = height, height
 end
 
 function surf:clear(b, t, c)
